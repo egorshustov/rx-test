@@ -3,12 +3,15 @@ package com.egorshustov.rxtest
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
+import io.reactivex.Flowable
+import io.reactivex.FlowableSubscriber
 import io.reactivex.Observable
 import io.reactivex.Observer
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import io.reactivex.functions.Predicate
 import io.reactivex.schedulers.Schedulers
+import org.reactivestreams.Subscription
 
 class MainActivity : AppCompatActivity() {
 
@@ -16,6 +19,11 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        //observableExample()
+        flowable()
+    }
+
+    private fun observableExample() {
         val taskObservable: Observable<Task> = Observable
             .fromIterable(DataSource.createTasksList())
             .subscribeOn(Schedulers.io())
@@ -47,6 +55,28 @@ class MainActivity : AppCompatActivity() {
             }
 
         })
+    }
+
+    private fun flowable() {
+        Flowable.range(0, 1000000)
+            .onBackpressureBuffer()
+            .observeOn(Schedulers.computation())
+            .subscribe(object : FlowableSubscriber<Int> {
+                override fun onSubscribe(s: Subscription) {
+                    s.request(1000000)
+                }
+
+                override fun onNext(t: Int?) {
+                    Log.d(TAG, "onNext: $t")
+                }
+
+                override fun onError(t: Throwable?) {
+                    Log.e(TAG, "onError: ", t)
+                }
+
+                override fun onComplete() {
+                }
+            })
     }
 
     companion object {
