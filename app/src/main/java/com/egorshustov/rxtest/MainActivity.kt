@@ -3,10 +3,7 @@ package com.egorshustov.rxtest
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
-import io.reactivex.Flowable
-import io.reactivex.FlowableSubscriber
-import io.reactivex.Observable
-import io.reactivex.Observer
+import io.reactivex.*
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.disposables.Disposable
@@ -14,6 +11,7 @@ import io.reactivex.functions.Consumer
 import io.reactivex.functions.Predicate
 import io.reactivex.schedulers.Schedulers
 import org.reactivestreams.Subscription
+
 
 class MainActivity : AppCompatActivity() {
 
@@ -25,7 +23,9 @@ class MainActivity : AppCompatActivity() {
 
         //observableExample()
         //flowable()
-        disposable()
+        //disposable()
+        createFromSingleObject()
+        createFromListOfObjects()
     }
 
     private fun observableExample() {
@@ -79,8 +79,7 @@ class MainActivity : AppCompatActivity() {
                     Log.e(TAG, "onError: ", t)
                 }
 
-                override fun onComplete() {
-                }
+                override fun onComplete() {}
             })
     }
 
@@ -122,6 +121,63 @@ class MainActivity : AppCompatActivity() {
             }
         }))
     }
+
+    private fun createFromSingleObject() {
+        val task = Task("Walk the dog", false, 4)
+
+        val singleTaskObservable = Observable
+            .create(ObservableOnSubscribe<Task> { emitter ->
+                if (!emitter.isDisposed) {
+                    emitter.onNext(task)
+                    emitter.onComplete()
+                }
+            })
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+
+        singleTaskObservable.subscribe(object : Observer<Task> {
+            override fun onSubscribe(d: Disposable) {}
+
+            override fun onNext(task: Task) {
+                Log.d(TAG, "onNext: single task: " + task.description)
+            }
+
+            override fun onError(e: Throwable) {}
+
+            override fun onComplete() {}
+        })
+    }
+
+    private fun createFromListOfObjects() {
+        val taskListObservable = Observable
+            .create(ObservableOnSubscribe<Task> { emitter ->
+                // Inside the subscribe method iterate through the list of tasks and call onNext(task)
+                for (task in DataSource.createTasksList()) {
+                    if (!emitter.isDisposed) {
+                        emitter.onNext(task)
+                    }
+                }
+                // Once the loop is complete, call the onComplete() method
+                if (!emitter.isDisposed) {
+                    emitter.onComplete()
+                }
+            })
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+
+        taskListObservable.subscribe(object : Observer<Task> {
+            override fun onSubscribe(d: Disposable) {}
+
+            override fun onNext(task: Task) {
+                Log.d(TAG, "onNext: task list: " + task.description)
+            }
+
+            override fun onError(e: Throwable) {}
+
+            override fun onComplete() {}
+        })
+    }
+
 
     override fun onDestroy() {
         super.onDestroy()
