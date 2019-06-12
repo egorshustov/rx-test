@@ -8,9 +8,9 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.disposables.Disposable
 import io.reactivex.functions.Consumer
+import io.reactivex.functions.Function
 import io.reactivex.functions.Predicate
 import io.reactivex.schedulers.Schedulers
-import org.reactivestreams.Subscriber
 import org.reactivestreams.Subscription
 
 
@@ -31,8 +31,8 @@ class MainActivity : AppCompatActivity() {
         //createFromSingleObject()
         //createFromListOfObjects()
         //just()
-        //range()
-        repeat()
+        range()
+        //repeat()
     }
 
     private fun observableExample() {
@@ -212,12 +212,24 @@ class MainActivity : AppCompatActivity() {
 
     private fun range() {
         Observable.range(0, 10)
-            .observeOn(Schedulers.io())
-            .subscribeOn(AndroidSchedulers.mainThread())
-            .subscribe(object : Observer<Int> {
+            .subscribeOn(Schedulers.io())
+            .map(object : Function<Int, Task> {
+                override fun apply(t: Int): Task {
+                    Log.d(TAG, "apply: ${Thread.currentThread().name}")
+                    return Task("This is a new task with priority $t", false, t)
+                }
+            })
+            .takeWhile(object : Predicate<Task> {
+                override fun test(t: Task): Boolean {
+                    Log.d(TAG, "test: ${Thread.currentThread().name}")
+                    return t.priority < 5
+                }
+            })
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe(object : Observer<Task> {
                 override fun onSubscribe(d: Disposable) {}
 
-                override fun onNext(t: Int) {
+                override fun onNext(t: Task) {
                     Log.d(TAG, "onNext: $t")
                 }
 
@@ -231,8 +243,8 @@ class MainActivity : AppCompatActivity() {
         // repeat must be used in conjunction with another operator
         Observable.range(0, 3)
             .repeat(3)
-            .observeOn(Schedulers.io())
-            .subscribeOn(AndroidSchedulers.mainThread())
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
             .subscribe(object : Observer<Int> {
                 override fun onSubscribe(d: Disposable) {}
 
