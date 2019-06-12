@@ -10,6 +10,7 @@ import io.reactivex.disposables.Disposable
 import io.reactivex.functions.Consumer
 import io.reactivex.functions.Predicate
 import io.reactivex.schedulers.Schedulers
+import org.reactivestreams.Subscriber
 import org.reactivestreams.Subscription
 
 
@@ -22,10 +23,16 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         //observableExample()
+
         //flowable()
+
         //disposable()
-        createFromSingleObject()
-        createFromListOfObjects()
+
+        //createFromSingleObject()
+        //createFromListOfObjects()
+        //just()
+        //range()
+        repeat()
     }
 
     private fun observableExample() {
@@ -126,10 +133,12 @@ class MainActivity : AppCompatActivity() {
         val task = Task("Walk the dog", false, 4)
 
         val singleTaskObservable = Observable
-            .create(ObservableOnSubscribe<Task> { emitter ->
-                if (!emitter.isDisposed) {
-                    emitter.onNext(task)
-                    emitter.onComplete()
+            .create(object : ObservableOnSubscribe<Task> {
+                override fun subscribe(emitter: ObservableEmitter<Task>) {
+                    if (!emitter.isDisposed) {
+                        emitter.onNext(task)
+                        emitter.onComplete()
+                    }
                 }
             })
             .subscribeOn(Schedulers.io())
@@ -178,6 +187,64 @@ class MainActivity : AppCompatActivity() {
         })
     }
 
+    private fun just() {
+        Observable.just("first", "second", "third", "fourth", "fifth", "sixth", "seventh", "eighth", "ninth", "tenth")
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe(object : Observer<String> {
+                override fun onSubscribe(d: Disposable) {
+                    Log.d(TAG, "onSubscribe: called")
+                }
+
+                override fun onNext(t: String) {
+                    Log.d(TAG, "onNext: $t")
+                }
+
+                override fun onError(e: Throwable) {
+                    Log.d(TAG, "onError: $e")
+                }
+
+                override fun onComplete() {
+                    Log.d(TAG, "onComplete: done")
+                }
+            })
+    }
+
+    private fun range() {
+        Observable.range(0, 10)
+            .observeOn(Schedulers.io())
+            .subscribeOn(AndroidSchedulers.mainThread())
+            .subscribe(object : Observer<Int> {
+                override fun onSubscribe(d: Disposable) {}
+
+                override fun onNext(t: Int) {
+                    Log.d(TAG, "onNext: $t")
+                }
+
+                override fun onError(e: Throwable) {}
+
+                override fun onComplete() {}
+            })
+    }
+
+    private fun repeat() {
+        // repeat must be used in conjunction with another operator
+        Observable.range(0, 3)
+            .repeat(3)
+            .observeOn(Schedulers.io())
+            .subscribeOn(AndroidSchedulers.mainThread())
+            .subscribe(object : Observer<Int> {
+                override fun onSubscribe(d: Disposable) {}
+
+                override fun onNext(t: Int) {
+                    Log.d(TAG, "onNext: $t")
+                }
+
+                override fun onError(e: Throwable) {}
+
+                override fun onComplete() {}
+            })
+    }
 
     override fun onDestroy() {
         super.onDestroy()
