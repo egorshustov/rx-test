@@ -12,6 +12,7 @@ import io.reactivex.functions.Function
 import io.reactivex.functions.Predicate
 import io.reactivex.schedulers.Schedulers
 import org.reactivestreams.Subscription
+import java.util.concurrent.TimeUnit
 
 
 class MainActivity : AppCompatActivity() {
@@ -31,8 +32,11 @@ class MainActivity : AppCompatActivity() {
         //createFromSingleObject()
         //createFromListOfObjects()
         //just()
-        range()
+        //range()
         //repeat()
+
+        //interval()
+        timer()
     }
 
     private fun observableExample() {
@@ -256,6 +260,43 @@ class MainActivity : AppCompatActivity() {
 
                 override fun onComplete() {}
             })
+    }
+
+    private fun interval() {
+        val intervalObservable = Observable.interval(1, TimeUnit.SECONDS)
+            .subscribeOn(Schedulers.io())
+            .takeWhile(object : Predicate<Long> {
+                override fun test(t: Long): Boolean {
+                    Log.d(TAG, "test: $t, thread: ${Thread.currentThread().name}")
+                    return t <= 5
+                }
+            })
+            .observeOn(AndroidSchedulers.mainThread())
+
+        val intervalDisposable = intervalObservable.subscribe {
+            Log.d(TAG, it.toString())
+        }
+    }
+
+    private fun timer() {
+        val timerObservable = Observable.timer(3, TimeUnit.SECONDS)
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+
+        timerObservable.subscribe(object : Observer<Long> {
+            override fun onSubscribe(d: Disposable) {
+            }
+
+            override fun onNext(t: Long) {
+                Log.d(TAG, "Next: $t")
+            }
+
+            override fun onError(e: Throwable) {
+            }
+
+            override fun onComplete() {
+            }
+        })
     }
 
     override fun onDestroy() {
