@@ -12,6 +12,7 @@ import io.reactivex.functions.Function
 import io.reactivex.functions.Predicate
 import io.reactivex.schedulers.Schedulers
 import org.reactivestreams.Subscription
+import java.lang.Thread.sleep
 import java.util.concurrent.Callable
 import java.util.concurrent.TimeUnit
 
@@ -326,13 +327,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun fromCallable() {
-        val database = AppDatabase.getInstance(application)
-        //database.taskDao().insertAllTasks(DataSource.createTasksList())
+        val tasksDao = AppDatabase.getInstance(application).taskDao()
 
         val callableDisposable = Observable
             .fromCallable(object : Callable<List<Task>> {
                 override fun call(): List<Task> {
-                    return database.taskDao().getAllTasks()
+                    tasksDao.insertAllTasks(DataSource.createTasksList())
+                    sleep(1000)
+                    return tasksDao.getAllTasks()
                 }
             })
             .subscribeOn(Schedulers.io())
