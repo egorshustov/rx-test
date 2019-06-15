@@ -12,6 +12,7 @@ import io.reactivex.functions.Function
 import io.reactivex.functions.Predicate
 import io.reactivex.schedulers.Schedulers
 import org.reactivestreams.Subscription
+import java.util.concurrent.Callable
 import java.util.concurrent.TimeUnit
 
 
@@ -36,7 +37,11 @@ class MainActivity : AppCompatActivity() {
         //repeat()
 
         //interval()
-        timer()
+        //timer()
+
+        //fromArray()
+        //fromIterable()
+        fromCallable()
     }
 
     private fun observableExample() {
@@ -297,6 +302,44 @@ class MainActivity : AppCompatActivity() {
             override fun onComplete() {
             }
         })
+    }
+
+    private fun fromArray() {
+        val fromArrayDisposable = Observable.fromArray(DataSource.createTasksArray())
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe { array ->
+                Log.d(TAG, "onNext: $array")
+                array.forEach {
+                    Log.d(TAG, "$it")
+                }
+            }
+    }
+
+    private fun fromIterable() {
+        val fromIterableDisposable = Observable.fromIterable(DataSource.createTasksList())
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe {
+                Log.d(TAG, "onNext: $it")
+            }
+    }
+
+    private fun fromCallable() {
+        val database = AppDatabase.getInstance(application)
+        //database.taskDao().insertAllTasks(DataSource.createTasksList())
+
+        val callableDisposable = Observable
+            .fromCallable(object : Callable<List<Task>> {
+                override fun call(): List<Task> {
+                    return database.taskDao().getAllTasks()
+                }
+            })
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe {
+                Log.d(TAG, "onNext: $it")
+            }
     }
 
     override fun onDestroy() {
