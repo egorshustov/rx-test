@@ -42,7 +42,10 @@ class MainActivity : AppCompatActivity() {
 
         //fromArray()
         //fromIterable()
-        fromCallable()
+        //fromCallable()
+
+        //filterForStringField()
+        filterForBooleanField()
     }
 
     private fun observableExample() {
@@ -52,7 +55,7 @@ class MainActivity : AppCompatActivity() {
             .filter(object : Predicate<Task> {
                 override fun test(t: Task): Boolean {
                     Log.d(TAG, "test: ${Thread.currentThread().name}")
-                    Thread.sleep(1000)
+                    sleep(1000)
                     return t.isComplete
                 }
             })
@@ -342,6 +345,47 @@ class MainActivity : AppCompatActivity() {
             .subscribe {
                 Log.d(TAG, "onNext: $it")
             }
+    }
+
+    private fun filterForStringField() {
+        val filterObservable = Observable.fromIterable(DataSource.createTasksList())
+            .subscribeOn(Schedulers.io())
+            .filter(object : Predicate<Task> {
+                override fun test(t: Task): Boolean {
+                    return when (t.description) {
+                        "Walk the dog" -> true
+                        else -> false
+                    }
+                }
+            }).observeOn(AndroidSchedulers.mainThread())
+
+        val filterDisposable = filterObservable.subscribe {
+            Log.d(TAG, "onNext: $it")
+        }
+    }
+
+    private fun filterForBooleanField() {
+        Observable.fromIterable(DataSource.createTasksList())
+            .subscribeOn(Schedulers.io())
+            .filter {
+                Log.d(TAG, "test: ${Thread.currentThread().name}")
+                it.isComplete
+            }.observeOn(AndroidSchedulers.mainThread())
+            .subscribe(object : Observer<Task> {
+                override fun onSubscribe(d: Disposable) {
+                }
+
+                override fun onNext(t: Task) {
+                    Log.d(TAG, "onNext: ${Thread.currentThread().name}")
+                    Log.d(TAG, "onNext: $t")
+                }
+
+                override fun onError(e: Throwable) {
+                }
+
+                override fun onComplete() {
+                }
+            })
     }
 
     override fun onDestroy() {
