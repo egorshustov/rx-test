@@ -45,7 +45,9 @@ class MainActivity : AppCompatActivity() {
         //fromCallable()
 
         //filterForStringField()
-        filterForBooleanField()
+        //filterForBooleanField()
+
+        distinct()
     }
 
     private fun observableExample() {
@@ -386,6 +388,15 @@ class MainActivity : AppCompatActivity() {
                 override fun onComplete() {
                 }
             })
+    }
+
+    private fun distinct() {
+        val disposable = Observable.fromIterable(DataSource.createTasksList())
+            .subscribeOn(Schedulers.io())
+            .distinct { t -> t.description }.observeOn(AndroidSchedulers.mainThread())
+            .subscribe {
+                Log.d(TAG, "onNext: $it")
+            }
     }
 
     override fun onDestroy() {
