@@ -47,7 +47,10 @@ class MainActivity : AppCompatActivity() {
         //filterForStringField()
         //filterForBooleanField()
 
-        distinct()
+        //distinct()
+
+        //take()
+        takeWhile()
     }
 
     private fun observableExample() {
@@ -394,6 +397,27 @@ class MainActivity : AppCompatActivity() {
         val disposable = Observable.fromIterable(DataSource.createTasksList())
             .subscribeOn(Schedulers.io())
             .distinct { t -> t.description }.observeOn(AndroidSchedulers.mainThread())
+            .subscribe {
+                Log.d(TAG, "onNext: $it")
+            }
+    }
+
+    private fun take() {
+        val disposable = Observable.fromIterable(DataSource.createTasksList())
+            .take(3)
+            .observeOn(Schedulers.io())
+            .subscribeOn(AndroidSchedulers.mainThread())
+            .subscribe {
+                Log.d(TAG, "onNext: $it")
+            }
+    }
+
+
+    private fun takeWhile() {
+        val disposable = Observable.fromIterable(DataSource.createTasksList())
+            .takeWhile { t -> t.isComplete }
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
             .subscribe {
                 Log.d(TAG, "onNext: $it")
             }
