@@ -3,6 +3,7 @@ package com.egorshustov.rxtest
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
+import com.jakewharton.rxbinding3.view.clicks
 import io.reactivex.*
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
@@ -11,11 +12,11 @@ import io.reactivex.functions.Consumer
 import io.reactivex.functions.Function
 import io.reactivex.functions.Predicate
 import io.reactivex.schedulers.Schedulers
+import kotlinx.android.synthetic.main.activity_main.*
 import org.reactivestreams.Subscription
 import java.lang.Thread.sleep
 import java.util.concurrent.Callable
 import java.util.concurrent.TimeUnit
-
 
 class MainActivity : AppCompatActivity() {
 
@@ -53,7 +54,10 @@ class MainActivity : AppCompatActivity() {
         //takeWhile()
 
         //mapTaskToString()
-        mapTaskToUpdatedTask()
+        //mapTaskToUpdatedTask()
+
+        //buffer()
+        bufferForTrackingUIInteractions()
     }
 
     private fun observableExample() {
@@ -454,6 +458,36 @@ class MainActivity : AppCompatActivity() {
             }
     }
 
+    private fun buffer() {
+        val disposable = Observable.fromIterable(DataSource.createTasksList())
+            .subscribeOn(Schedulers.io())
+            .buffer(2)
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe { list ->
+                Log.d(TAG, "onNext: bundle results: -------------------")
+
+                list.forEach {
+                    Log.d(TAG, it.toString())
+                }
+            }
+    }
+
+    private fun bufferForTrackingUIInteractions() {
+        val disposable = button.clicks()
+            .map {
+                Log.d(TAG, "map thread: ${Thread.currentThread().name}")
+                1
+            }
+            .buffer(4, TimeUnit.SECONDS)
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe {
+                Log.d(TAG, "onNext thread: ${Thread.currentThread().name}")
+                Log.d(TAG, "onNext: you clicked ${it.size} times in 4 seconds!")
+            }
+
+        disposables.add(disposable)
+    }
+
     override fun onDestroy() {
         super.onDestroy()
         // If using MVVM, clear disposables in ViewModel onCleared method
@@ -461,6 +495,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     companion object {
-        const val TAG = "MainActivity"
+        const val TAG = "RxTest"
     }
 }
