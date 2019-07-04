@@ -50,7 +50,10 @@ class MainActivity : AppCompatActivity() {
         //distinct()
 
         //take()
-        takeWhile()
+        //takeWhile()
+
+        //mapTaskToString()
+        mapTaskToUpdatedTask()
     }
 
     private fun observableExample() {
@@ -420,6 +423,34 @@ class MainActivity : AppCompatActivity() {
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe {
                 Log.d(TAG, "onNext: $it")
+            }
+    }
+
+    private fun mapTaskToString() {
+        val extractDescriptionFunction = Function<Task, String> { t ->
+            Log.d(TAG, "apply: doing work on thread: ${Thread.currentThread().name}")
+            t.description
+        }
+
+        val disposable = Observable.fromIterable(DataSource.createTasksList())
+            .subscribeOn(Schedulers.io())
+            .map(extractDescriptionFunction)
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe {
+                Log.d(TAG, "onNext: $it")
+            }
+    }
+
+    private fun mapTaskToUpdatedTask() {
+        val disposable = Observable.fromIterable(DataSource.createTasksList())
+            .subscribeOn(Schedulers.io())
+            .map {
+                it.isComplete = true
+                it
+            }
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe {
+                Log.d(TAG, "onNext: is this $it complete? " + it.isComplete)
             }
     }
 
