@@ -3,6 +3,7 @@ package com.egorshustov.rxtest
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
+import com.jakewharton.rxbinding3.appcompat.queryTextChanges
 import com.jakewharton.rxbinding3.view.clicks
 import io.reactivex.*
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -21,6 +22,7 @@ import java.util.concurrent.TimeUnit
 class MainActivity : AppCompatActivity() {
 
     val disposables = CompositeDisposable()
+    var timeSinceLastRequest: Long = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -57,7 +59,9 @@ class MainActivity : AppCompatActivity() {
         //mapTaskToUpdatedTask()
 
         //buffer()
-        bufferForTrackingUIInteractions()
+        //bufferForTrackingUIInteractions()
+
+        debounce()
     }
 
     private fun observableExample() {
@@ -486,6 +490,26 @@ class MainActivity : AppCompatActivity() {
             }
 
         disposables.add(disposable)
+    }
+
+    private fun debounce() {
+        timeSinceLastRequest = System.currentTimeMillis()
+
+        val disposable = search_view.queryTextChanges()
+            .debounce(1, TimeUnit.SECONDS)
+            .subscribe {
+                Log.d(TAG, "onNext: time  since last request: " + (System.currentTimeMillis() - timeSinceLastRequest))
+                timeSinceLastRequest = System.currentTimeMillis()
+                Log.d(TAG, "onNext thread: ${Thread.currentThread().name}")
+                Log.d(TAG, "onNext: search query: $it")
+
+                fakeSendRequestToServer(it.toString())
+            }
+
+        disposables.add(disposable)
+    }
+
+    private fun fakeSendRequestToServer(text: String) {
     }
 
     override fun onDestroy() {
