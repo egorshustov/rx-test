@@ -61,7 +61,8 @@ class MainActivity : AppCompatActivity() {
         //buffer()
         //bufferForTrackingUIInteractions()
 
-        debounce()
+        //debounce()
+        throttleFirst()
     }
 
     private fun observableExample() {
@@ -510,6 +511,23 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun fakeSendRequestToServer(text: String) {
+    }
+
+    private fun throttleFirst() {
+        // Restricts button spamming
+        timeSinceLastRequest = System.currentTimeMillis()
+        val disposable = button.clicks()
+            .throttleFirst(1, TimeUnit.SECONDS)
+            .subscribe {
+                Log.d(TAG, "onNext: time since last clicked: " + (System.currentTimeMillis() - timeSinceLastRequest))
+                Log.d(TAG, "onNext thread: ${Thread.currentThread().name}")
+                someMethod()
+            }
+        disposables.add(disposable)
+    }
+
+    private fun someMethod() {
+        timeSinceLastRequest = System.currentTimeMillis()
     }
 
     override fun onDestroy() {
