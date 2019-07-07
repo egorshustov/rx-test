@@ -62,7 +62,11 @@ class MainActivity : AppCompatActivity() {
         //bufferForTrackingUIInteractions()
 
         //debounce()
-        throttleFirst()
+        //throttleFirst()
+
+        //single()
+        //maybe()
+        completable()
     }
 
     private fun observableExample() {
@@ -528,6 +532,76 @@ class MainActivity : AppCompatActivity() {
 
     private fun someMethod() {
         timeSinceLastRequest = System.currentTimeMillis()
+    }
+
+    private fun single() {
+        Single.just(DataSource.createTasksList())
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe(object : SingleObserver<List<Task>> {
+                override fun onSubscribe(d: Disposable) {
+                    Log.d(TAG, "onSubscribe")
+                }
+
+                override fun onSuccess(t: List<Task>) {
+                    Log.d(TAG, "onSuccess: $t")
+                }
+
+                override fun onError(e: Throwable) {
+                    Log.d(TAG, "onError")
+                }
+            })
+    }
+
+    private fun maybe() {
+        Maybe.create(MaybeOnSubscribe<List<Task>> { emitter ->
+            if (!emitter.isDisposed) {
+                emitter.onSuccess(DataSource.createTasksList())
+                emitter.onComplete()
+            }
+        })
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe(object : MaybeObserver<List<Task>> {
+                override fun onSubscribe(d: Disposable) {
+                    Log.d(TAG, "onSubscribe")
+                }
+
+                override fun onSuccess(t: List<Task>) {
+                    Log.d(TAG, "onSuccess: $t")
+                }
+
+                override fun onComplete() {
+                    Log.d(TAG, "onComplete")
+                }
+
+                override fun onError(e: Throwable) {
+                    Log.d(TAG, "onError")
+                }
+            })
+    }
+
+    private fun completable() {
+        Completable.create { emitter ->
+            if (!emitter.isDisposed) {
+                emitter.onComplete()
+            }
+        }
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe(object : CompletableObserver {
+                override fun onSubscribe(d: Disposable) {
+                    Log.d(TAG, "onSubscribe")
+                }
+
+                override fun onComplete() {
+                    Log.d(TAG, "onComplete")
+                }
+
+                override fun onError(e: Throwable) {
+                    Log.d(TAG, "onError")
+                }
+            })
     }
 
     override fun onDestroy() {
